@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VoiceCast · Real-time translation</title>
+<meta name="description" content="Real-time speech, text and document translation. Start a room and everyone reads in their own language.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='16' cy='18' r='10' fill='%232E6BFF'/%3E%3Ccircle cx='25' cy='14' r='7' fill='%2322D3EE'/%3E%3Ccircle cx='24' cy='24' r='8' fill='%236EA8FF'/%3E%3C/svg%3E">
+<script>
+(function(){try{var s=JSON.parse(localStorage.getItem('voicecast_settings')||'{}');var t=s.theme||'system';var d=t==='dark'||(t==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');var r=typeof s.reduceMotion==='boolean'?s.reduceMotion:!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);document.documentElement.setAttribute('data-motion',r?'reduced':'full');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#F4F7FC;--ink:#0B1D33;--soft:#52657C;--surface:#FFFFFF;--line:rgba(11,29,51,.10);--tint:rgba(46,107,255,.07);--blue:#2E6BFF;--acc:#2E6BFF;--glow:rgba(46,107,255,.10);color-scheme:light}
+:root[data-theme="dark"]{--bg:#0A101C;--ink:#E6EDF8;--soft:#9DB0CB;--surface:#151E2E;--line:rgba(255,255,255,.10);--tint:rgba(110,168,255,.10);--acc:#6EA8FF;--glow:rgba(46,107,255,.20);color-scheme:dark}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;background-image:radial-gradient(55% 45% at 76% 34%,var(--glow),transparent 70%);background-repeat:no-repeat;transition:opacity .22s ease}
+body.leaving{opacity:0}
+h1{font-family:'Space Grotesk',sans-serif}
+button{font-family:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+
+.top{display:flex;align-items:center;justify-content:space-between;padding:22px clamp(20px,5vw,56px)}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.01em}
+.brand svg{width:28px;height:28px}
+.theme{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--soft);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.theme:hover{color:var(--ink)}
+.theme svg{width:18px;height:18px}
+
+.hero{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(28px,5vw,80px);align-items:center;padding:clamp(8px,3vh,32px) clamp(20px,5vw,56px) 40px;max-width:1280px;width:100%;margin:0 auto}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin-bottom:18px}
+h1{font-size:clamp(36px,4.8vw,62px);line-height:1.04;letter-spacing:-.028em;font-weight:700}
+h1 .acc{color:var(--acc)}
+.lead{margin-top:20px;max-width:520px;font-size:clamp(15px,1.25vw,17px);line-height:1.65;color:var(--soft)}
+.cta{margin-top:30px;min-height:120px}
+.gbtn{min-height:44px;display:flex;align-items:center}
+.guest{display:inline-flex;align-items:center;gap:6px;margin-top:16px;background:none;border:none;border-bottom:1px solid var(--line);color:var(--ink);font:600 14px 'Inter',sans-serif;cursor:pointer;padding:5px 0}
+.guest:hover{border-color:var(--ink)}
+.fine{margin-top:12px;font-size:12.5px;color:var(--soft);max-width:430px;line-height:1.55}
+.welcome{display:flex;align-items:center;gap:14px}
+.av{width:46px;height:46px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 auto}
+.av img{width:100%;height:100%;object-fit:cover}
+.who b{display:block;font-size:15px}
+.who span{font-size:12.5px;color:var(--soft)}
+.row{display:flex;align-items:center;flex-wrap:wrap;margin-top:18px}
+.primary{display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:12px;border:none;background:var(--blue);color:#fff;font:600 15px 'Inter',sans-serif;cursor:pointer;transition:transform .15s;box-shadow:0 10px 24px -12px rgba(46,107,255,.8)}
+.primary:hover{transform:translateY(-1px)}
+.linkbtn{background:none;border:none;color:var(--soft);font:500 13px 'Inter',sans-serif;cursor:pointer;margin-left:16px;text-decoration:underline;text-underline-offset:3px}
+.linkbtn:hover{color:var(--ink)}
+
+.demo{border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:0 30px 70px -42px rgba(11,29,51,.6);overflow:hidden}
+.demo-bar{display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--line);font-size:12.5px}
+.demo-bar .live{width:8px;height:8px;border-radius:50%;background:#E5484D}
+.demo-title{font-weight:600}
+.demo-pair{margin-left:auto;font:500 11.5px 'IBM Plex Mono',monospace;color:var(--soft)}
+.demo-feed{height:clamp(280px,40vh,380px);padding:6px 20px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 26%);mask-image:linear-gradient(to bottom,transparent 0,#000 26%)}
+.dm{flex:0 0 auto;padding:14px 0;border-bottom:1px solid var(--line);animation:dmIn .35s ease backwards}
+.dm:last-child{border-bottom:none}
+@keyframes dmIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.dl{display:flex;gap:12px;align-items:baseline}
+.dl+.dl{margin-top:6px}
+.dt{flex:0 0 28px;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--soft)}
+.dl.tr .dt{color:var(--acc)}
+.dx{flex:1;min-width:0;font-size:14px;line-height:1.55;color:var(--soft);overflow-wrap:anywhere}
+.dl.tr .dx{font-size:17px;font-weight:500;color:var(--ink);animation:dmIn .4s ease backwards}
+.dm.typing .dx{font-style:italic}
+.cf{display:inline-flex;align-items:center;gap:5px;margin-left:10px;font:500 11px 'IBM Plex Mono',monospace;color:var(--soft)}
+.cf i{width:7px;height:7px;border-radius:50%;background:#34C38F;display:inline-block}
+.demo-dock{border-top:1px solid var(--line);padding:8px 18px 14px;display:flex;align-items:center;gap:16px}
+#dWave{flex:1;height:52px;min-width:0;display:block}
+.dmic{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#6EA8FF,#2E6BFF 55%,#1B3A9A 100%);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:background .2s}
+.dmic.on{background:radial-gradient(circle at 32% 28%,#FFB199,#FF5C7A 55%,#B3243F 100%)}
+.dmic svg{width:20px;height:20px;fill:#fff}
+.cap{margin-top:12px;font-size:12px;color:var(--soft);text-align:center}
+
+.facts{border-top:1px solid var(--line)}
+.facts-in{max-width:1280px;margin:0 auto;padding:0 clamp(20px,5vw,56px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.fact{padding:26px 28px 26px 0;border-right:1px solid var(--line)}
+.fact+.fact{padding-left:28px}
+.fact:last-child{border-right:none}
+.fact b{display:block;font-size:14.5px;margin-bottom:6px}
+.fact span{font-size:13px;line-height:1.6;color:var(--soft)}
+.langs{border-top:1px solid var(--line)}
+.langs-in{max-width:1280px;margin:0 auto;padding:16px clamp(20px,5vw,56px);display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--soft)}
+.langs-in .n{color:var(--ink);font-weight:600}
+.foot{padding:16px clamp(20px,5vw,56px) 24px;font-size:12px;color:var(--soft);text-align:center}
+
+.rise{animation:rise .6s cubic-bezier(.2,.7,.2,1) backwards}
+.d1{animation-delay:.05s}.d2{animation-delay:.12s}.d3{animation-delay:.2s}.d4{animation-delay:.3s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+:root[data-motion="reduced"] *{animation:none!important;transition:none!important}
+
+@media (max-width:980px){
+  .hero{grid-template-columns:1fr;gap:34px}
+  .facts-in{grid-template-columns:1fr 1fr}
+  .fact,.fact+.fact{padding:20px 16px 20px 0;border-right:none;border-bottom:1px solid var(--line)}
+  .demo-feed{height:300px}
+}
+@media (max-width:560px){.facts-in{grid-template-columns:1fr}}
+</style>
+<link rel="stylesheet" href="home.css?v=8">
+<script src="languages.js"></script>
+<script defer src="home.js?v=8"></script>
+<link rel="stylesheet" href="lively.css?v=1">
+<script defer src="lively.js?v=1"></script>
+</head>
+<body class="intro-page">
+<header class="top rise">
+  <div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="16" cy="18" r="10" fill="#2E6BFF" opacity=".9"/><circle cx="25" cy="14" r="7" fill="#22D3EE" opacity=".9"/><circle cx="24" cy="24" r="8" fill="#6EA8FF" opacity=".95"/></svg>VoiceCast</div>
+  <nav class="intro-nav" aria-label="Page navigation"><a href="#features">Explore</a><a href="#languages">Languages</a><button class="theme" id="theme" type="button"></button></nav>
+</header>
+
+<main class="hero">
+  <section class="copy">
+    <div class="eyebrow rise d1">Real-time translation</div>
+    <h1 class="rise d2">Your words.<br><span class="acc">A world of<br>possibilities.</span></h1>
+    <p class="lead rise d3">From a simple hello to a shared idea. Translate your voice, text, and documents—and bring everyone into the conversation.</p>
+    <div class="cta rise d4" id="auth"></div>
+  </section>
+  <section class="stage rise d3" aria-label="Product preview">
+    <div class="intro-stage-label"><span class="intro-dot"></span> DIFFERENT LANGUAGES. REAL CONNECTIONS.</div>
+    <div data-live-preview></div>
+    <p class="cap">An illustrative conversation. Try VoiceCast with your own words.</p>
+  </section>
+</main>
+
+<section class="facts" id="features"><div class="intro-section-heading"><span>MADE FOR EVERY KIND OF CONVERSATION</span><h2>One place. So many ways to connect.</h2></div>
+  <div class="facts-in">
+    <div class="fact"><div class="intro-feature-top"><i>◉</i><span>01</span></div><b>Conversation</b><span>Speak and watch the translation appear as you talk. Every session is saved with a transcript.</span></div>
+    <div class="fact"><div class="intro-feature-top"><i>◎</i><span>02</span></div><b>Interpreter rooms</b><span>Up to 8 people join by QR or code. Each one speaks and reads in their own language.</span></div>
+    <div class="fact"><div class="intro-feature-top"><i>Aa</i><span>03</span></div><b>Text</b><span>Translate typed or dictated text. The source language can be detected for you.</span></div>
+    <div class="fact"><div class="intro-feature-top"><i>▤</i><span>04</span></div><b>Documents</b><span>Upload a TXT, PDF or Word file and download the translation in the same format.</span></div>
+  </div>
+</section>
+<section class="langs" id="languages"><div class="intro-section-heading"><span>FIND YOUR WORDS</span><h2>A little hello goes a long way.</h2><p>Explore every language available in VoiceCast.</p></div>
+  <div class="langs-in"><span class="n" data-language-label>27 languages</span><span lang="en">English</span><span lang="es">Español</span><span lang="fr">Français</span><span lang="de">Deutsch</span><span lang="it">Italiano</span><span lang="pt">Português</span><span lang="nl">Nederlands</span><span lang="pl">Polski</span><span lang="ru">Русский</span><span lang="tr">Türkçe</span><span lang="ar">العربية</span><span lang="hi">हिन्दी</span><span lang="mr">मराठी</span><span lang="bn">বাংলা</span><span lang="ta">தமிழ்</span><span lang="te">తెలుగు</span><span lang="gu">ગુજરાતી</span><span lang="kn">ಕನ್ನಡ</span><span lang="ml">മലയാളം</span><span lang="pa">ਪੰਜਾਬੀ</span><span lang="ur">اردو</span><span lang="ja">日本語</span><span lang="ko">한국어</span><span lang="zh">中文</span><span lang="id">Bahasa Indonesia</span><span lang="vi">Tiếng Việt</span><span lang="th">ไทย</span></div>
+</section>
+<footer class="foot"><span class="intro-footer-brand">VoiceCast</span><span>Translate. Understand. Belong.</span><a href="#auth">Start your next conversation ↗</a></footer>
+
+<script>
+(function () {
+  var CLIENT_ID = '889598446848-dhk76l50457s40skfiq2r6pjn2677sob.apps.googleusercontent.com';
+  var root = document.documentElement;
+  function $(id) { return document.getElementById(id); }
+  function reduced() { return root.getAttribute('data-motion') === 'reduced'; }
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function readSettings() { try { return JSON.parse(localStorage.getItem('voicecast_settings') || '{}'); } catch (e) { return {}; } }
+  function getUser() { try { return JSON.parse(localStorage.getItem('voicecast_user') || 'null'); } catch (e) { return null; } }
+  function initial(n) { return (String(n || '?').trim().charAt(0) || '?').toUpperCase(); }
+  function firstName(n) { return String(n || '').trim().split(/\s+/)[0] || 'there'; }
+
+  /* Theme */
+  var SVG_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var MOON = SVG_OPEN + '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  var SUN = SVG_OPEN + '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  var themeBtn = $('theme');
+  function paintTheme() {
+    themeBtn.innerHTML = isDark() ? SUN : MOON;
+    themeBtn.setAttribute('aria-label', isDark() ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+  themeBtn.addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    var s = readSettings();
+    s.theme = next;
+    try { localStorage.setItem('voicecast_settings', JSON.stringify(s)); } catch (e) {}
+    paintTheme();
+    renderGoogle();
+  });
+  paintTheme();
+
+  /* Entering the app */
+  function enterApp() {
+    document.body.classList.add('leaving');
+    setTimeout(function () { window.location.href = 'app.html'; }, reduced() ? 0 : 220);
+  }
+
+  /* Google sign-in */
+  var inited = false, gsiOk = false, gsiTimer = null;
+  function decodeJwt(token) {
+    var b = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(atob(b).split('').map(function (c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join('')));
+  }
+  function onCredential(resp) {
+    try {
+      var p = decodeJwt(resp.credential);
+      localStorage.setItem('voicecast_user', JSON.stringify({ name: p.name || p.email, email: p.email, picture: p.picture }));
+    } catch (e) {}
+    enterApp();
+  }
+  function showProblem() {
+    var h = $('gbtn');
+    if (!h || h.children.length) return;
+    var m = document.createElement('div');
+    m.className = 'fine';
+    m.style.marginTop = '0';
+    m.textContent = 'Google sign-in is unavailable right now. This can happen when you are offline or the page is opened from a file. You can still continue without signing in.';
+    h.appendChild(m);
+  }
+  function renderGoogle() {
+    var host = $('gbtn');
+    if (!host || !(window.google && google.accounts && google.accounts.id)) return;
+    try {
+      if (!inited) { google.accounts.id.initialize({ client_id: CLIENT_ID, callback: onCredential }); inited = true; }
+      host.innerHTML = '';
+      google.accounts.id.renderButton(host, { type: 'standard', theme: isDark() ? 'filled_black' : 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', logo_alignment: 'left', width: 280 });
+      gsiOk = true;
+      clearTimeout(gsiTimer);
+    } catch (e) { showProblem(); }
+  }
+  window.onGoogleLibraryLoad = renderGoogle;
+
+  function renderAuth() {
+    var auth = $('auth');
+    var u = getUser();
+    auth.innerHTML = '';
+    clearTimeout(gsiTimer);
+    if (u) {
+      var w = document.createElement('div');
+      w.className = 'welcome';
+      var av = document.createElement('div');
+      av.className = 'av';
+      if (u.picture) {
+        var img = new Image();
+        img.referrerPolicy = 'no-referrer';
+        img.alt = '';
+        img.onerror = function () { img.remove(); av.textContent = initial(u.name); };
+        img.src = u.picture;
+        av.appendChild(img);
+      } else { av.textContent = initial(u.name); }
+      var who = document.createElement('div');
+      who.className = 'who';
+      var b = document.createElement('b');
+      b.textContent = 'Welcome back, ' + firstName(u.name);
+      var sp = document.createElement('span');
+      sp.textContent = u.email || '';
+      who.appendChild(b);
+      who.appendChild(sp);
+      w.appendChild(av);
+      w.appendChild(who);
+      auth.appendChild(w);
+      var row = document.createElement('div');
+      row.className = 'row';
+      var cont = document.createElement('button');
+      cont.type = 'button';
+      cont.className = 'primary';
+      cont.textContent = 'Continue to VoiceCast \u2192';
+      cont.addEventListener('click', enterApp);
+      var other = document.createElement('button');
+      other.type = 'button';
+      other.className = 'linkbtn';
+      other.textContent = 'Use a different account';
+      other.addEventListener('click', function () { try { localStorage.removeItem('voicecast_user'); } catch (e) {} renderAuth(); });
+      row.appendChild(cont);
+      row.appendChild(other);
+      auth.appendChild(row);
+    } else {
+      var g = document.createElement('div');
+      g.className = 'gbtn';
+      g.id = 'gbtn';
+      auth.appendChild(g);
+      var guest = document.createElement('button');
+      guest.type = 'button';
+      guest.className = 'guest';
+      guest.textContent = 'Continue without signing in \u2192';
+      guest.addEventListener('click', enterApp);
+      auth.appendChild(guest);
+      var fine = document.createElement('p');
+      fine.className = 'fine';
+      fine.textContent = 'No account needed to try it. Signing in adds your name and photo to the app.';
+      auth.appendChild(fine);
+      gsiOk = false;
+      renderGoogle();
+      gsiTimer = setTimeout(function () { if (!gsiOk) showProblem(); }, 7000);
+    }
+  }
+  renderAuth();
+
+})();
+</script>
+</body>
+</html>
